@@ -1,0 +1,101 @@
+https://raw.githubusercontent.com/Jerril/csv_upload/main/data.csv
+
+https://jerril.github.io/csv_upload/data.csv
+
+http://theodi.github.io/hot-drinks/hot-drinks.csv
+
+{
+    "csv": {
+        "url": "https://jerril.github.io/csv_upload/data.csv",
+        "select_fields": ["First Name", "Last Name"]
+    }
+}
+
+function convertToJSON(url) {
+    const jsonArray = csv().fromStream(request.get(url))
+    return jsonArray;
+}
+
+// const record = {}
+// // loop thru fields
+// fields.forEach(field => {
+//     record[field] = item[field];
+//     if(record[field]){
+//         newArr.push(record);
+//     }
+// });
+
+// middleware to check if link contains valid csv
+function checkCSVValidity(req, res, next) {
+    // get the csv link
+    const {url} = req.body.csv;
+
+    var options = {
+        url: 'http://csvlint.io/package.json',
+        method: 'POST',
+        body: `urls[]=${url}`
+    };
+
+    request(options, (error, response, body) => {
+        if (!error && response.statusCode == 200) {
+            const url = JSON.parse(body)["package"]["url"];
+            
+            const newUrl = url+'.json';
+
+            //
+            var options = {
+                url: newUrl
+            };
+
+            request(options, (error, response, body) => {
+                if (!error && response.statusCode == 200) {
+                    const status = JSON.parse(body)["package"]["validations"][0]["state"];
+                    if(status == "valid" || status == "warning" ) {
+                        return next();
+                    }else {
+                        return res.send('invalid csv')
+                    }
+                }
+            });
+
+        }
+    });
+}
+
+// const results = [];
+
+// fs.createReadStream('data.csv')
+// .pipe(csv())
+// .on('data', (data) => results.push(data))
+// .on('end', () => {
+//     console.log(results);
+//     res.send();
+//     // [
+//     //   { NAME: 'Daffy Duck', AGE: '24' },
+//     //   { NAME: 'Bugs Bunny', AGE: '22' }
+//     // ]
+// });
+
+
+ // Convert a csv file with csvtojson
+    // csv()
+    // .fromFile('data.csv')
+    // .then(function(jsonArrayObj){ //when parse finished, result will be emitted here.
+    //     console.log(jsonArrayObj);
+        
+    //     res.send();
+    // })
+
+    // Parse large csv with stream / pipe (low mem consumption)
+    // csv()
+    // .fromStream(readableStream)
+    // .subscribe(function(jsonObj){ //single json object will be emitted for each csv line
+    // // parse each json asynchronousely
+    // return new Promise(function(resolve,reject){
+    //     asyncStoreToDb(json,function(){resolve()})
+    // })
+    // }) 
+
+    // //Use async / await
+    // const jsonArray=await csv().fromFile(filePath);
+    // get & extract the "url" & "select_fields" in the request body
